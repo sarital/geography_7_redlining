@@ -1,0 +1,290 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+---
+title: "FactFinder_week10"
+author: "Sarita Lee"
+date: "December 6, 2017"
+output: html_document
+---
+
+```{r}
+#librries
+library(readr)
+library(dplyr)
+```
+
+# 2010 full census data
+```{r}
+#read in data
+ff_sd <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/downloaded_data/FF_SD_2010_general/DEC_10_SF1_SF1DP1_with_ann.csv")
+
+
+#make copy
+ff_sd2 <- ff_sd
+
+# delete first row and second column
+ff_sd2 <- ff_sd2[-1,-2]
+
+# change name to GEO_ID
+names(ff_sd2)[1] <- "GEO_ID"
+
+# delete last row
+ff_sd2<- ff_sd2[-628,]
+
+ff_sd2[,3] <- as.numeric(ff_sd2[,3])
+
+#make sure all are numeric
+#ff_sd2[,3] <- lapply(ff_sd2[,3], function(x) as.numeric(x))
+for (i in 3:ncol(ff_sd2)) {
+  ff_sd2[,i] <- lapply(ff_sd2[,i], function(x) as.numeric(x))
+}
+
+# delete any with missing?
+ff70 <- ff_sd2$HD02_S070
+
+# export data file
+write.csv(ff_sd2, file = "FF_SD_2010_cleaned.csv")
+write.xlsx(ff_sd2, file = "FF_SD_2010_cleaned.xlsx")
+```
+
+# Weighted average for race data
+```{r}
+# cut down fact finder data to what I need (total pop, white, black, latino)
+names(ff_sd2)[216]
+census_sd_all <- ff_sd2[,c(1,3,4,157,158,159,160,215,216)]
+
+# read in data (tracts that overlap with all of historic area)
+tracts_historic <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_historic.csv")
+tracts_a <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_a_intersect.csv")
+tracts_b <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_b_intersect.csv")
+tracts_c <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_c_intersect.csv")
+tracts_d <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_d_intersect.csv")
+
+# just keep the GEO_ID for the tracts 
+tracts_historic_id <- tracts_historic[,1]
+tracts_id_a <- tracts_a[,1]
+tracts_id_b <- tracts_b[,1]
+tracts_id_c <- tracts_c[,1]
+tracts_id_d <- tracts_d[,1]
+
+# merge/join this with factfinder data
+census_historic_all <- merge(census_sd_all, tracts_historic_id, by="GEO_ID")
+census_a <- merge(census_sd_all, tracts_id_a, by="GEO_ID")
+census_b <- merge(census_sd_all, tracts_id_b, by="GEO_ID")
+census_c <- merge(census_sd_all, tracts_id_c, by="GEO_ID")
+census_d <- merge(census_sd_all, tracts_id_d, by="GEO_ID")
+
+
+# Weighted average
+## White
+weighted_avg_white_all <- (sum(census_historic_all$HD01_S078))/(sum(census_historic_all$HD01_S001))
+weighted_avg_white_a <- (sum(census_a$HD01_S078))/(sum(census_a$HD01_S001))
+weighted_avg_white_b <- (sum(census_b$HD01_S078))/(sum(census_b$HD01_S001))
+weighted_avg_white_c <- (sum(census_c$HD01_S078))/(sum(census_c$HD01_S001))
+weighted_avg_white_d <- (sum(census_d$HD01_S078))/(sum(census_d$HD01_S001))
+## Black
+weighted_avg_black_all <- (sum(census_historic_all$HD01_S079))/(sum(census_historic_all$HD01_S001))
+weighted_avg_black_a <- (sum(census_a$HD01_S079))/(sum(census_a$HD01_S001))
+weighted_avg_black_b <- (sum(census_b$HD01_S079))/(sum(census_b$HD01_S001))
+weighted_avg_black_c <- (sum(census_c$HD01_S079))/(sum(census_c$HD01_S001))
+weighted_avg_black_d <- (sum(census_d$HD01_S079))/(sum(census_d$HD01_S001))
+## Latino
+weighted_avg_latino_all <- (sum(census_historic_all$HD01_S107))/(sum(census_historic_all$HD01_S001))
+weighted_avg_latino_a <- (sum(census_a$HD01_S107))/(sum(census_a$HD01_S001))
+weighted_avg_latino_b <- (sum(census_b$HD01_S107))/(sum(census_b$HD01_S001))
+weighted_avg_latino_c <- (sum(census_c$HD01_S107))/(sum(census_c$HD01_S001))
+weighted_avg_latino_d <- (sum(census_d$HD01_S107))/(sum(census_d$HD01_S001))
+
+# Number of people
+## Mean
+census_historic$HD01_S001 %>% mean()
+
+## Median
+
+# White
+## Mean
+census_historic$HD02_S078 %>% mean()
+census_a$HD02_S078 %>% mean()
+census_b$HD02_S078 %>% mean()
+census_c$HD02_S078 %>% mean()
+census_d$HD02_S078 %>% mean()
+## Median
+census_historic$HD02_S078 %>% median()
+census_a$HD02_S078 %>% median()
+census_b$HD02_S078 %>% median()
+census_c$HD02_S078 %>% median()
+census_d$HD02_S078 %>% median()
+
+
+census_historic$HD02_S079 %>% mean()
+census_historic$HD02_S107 %>% mean()
+
+census_historic$HD01_S001 %>% median()
+census_historic$HD02_S078 %>% median()
+census_historic$HD02_S079 %>% median()
+census_historic$HD02_S107 %>% median()
+```
+
+# 2010 estimated income data
+```{r}
+#read in data
+income <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/downloaded_data/FF_SD_2010_income/ACS_10_5YR_S1901_with_ann.csv")
+
+#make copy
+income2 <- income
+
+# delete first row and second column
+income2 <- income2[-1,-2]
+
+# change name to GEO_ID
+names(income2)[1] <- "GEO_ID"
+
+# delete all even rows
+odd_vals <- seq(1,ncol(income2),2)
+income3 <- income2[,odd_vals]
+
+
+#make sure all are numeric
+#ff_sd2[,3] <- lapply(ff_sd2[,3], function(x) as.numeric(x))
+for (i in 2:ncol(income3)) {
+  income3[,i] <- lapply(income3[,i], function(x) as.numeric(x))
+}
+
+# export data file
+write.csv(income3, file = "FF_SD_2010_income_cleaned.csv")
+
+#write.xlsx(ff_sd2, file = "FF_SD_2010_cleaned.xlsx")
+```
+
+# analyzing merged income data
+```{r}
+# shorten income data to what is actually needed
+income3$HC02_EST_VC13
+
+names(ff_sd2)[301]
+names(income2)[91]
+
+income_small <- income2[,c(1,91)]
+census_sd_short <- ff_sd2[,c(1,301)]
+
+# read in data (tracts that overlap with all of historic area)
+tracts_historic <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_historic.csv")
+tracts_a <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_a_intersect.csv")
+tracts_b <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_b_intersect.csv")
+tracts_c <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_c_intersect.csv")
+tracts_d <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_d_intersect.csv")
+
+tracts_historic_id <- tracts_historic[,1]
+tracts_id_a <- tracts_a[,1]
+tracts_id_b <- tracts_b[,1]
+tracts_id_c <- tracts_c[,1]
+tracts_id_d <- tracts_d[,1]
+
+#merge all three 
+## all census tracts
+merged_income <- merge(income_small, tracts_historic_id, by="GEO_ID")
+merged_income_house <- merge(merged_income, census_sd_short, by="GEO_ID")
+## a
+merged_income_a <- merge(income_small, tracts_id_a, by="GEO_ID")
+merged_income_house_a <- merge(merged_income_a, census_sd_short, by="GEO_ID")
+## b
+merged_income_b <- merge(income_small, tracts_id_b, by="GEO_ID")
+merged_income_house_b <- merge(merged_income_b, census_sd_short, by="GEO_ID")
+## c
+merged_income_c <- merge(income_small, tracts_id_c, by="GEO_ID")
+merged_income_house_c <- merge(merged_income_c, census_sd_short, by="GEO_ID")
+## d
+merged_income_d <- merge(income_small, tracts_id_d, by="GEO_ID")
+merged_income_house_d <- merge(merged_income_d, census_sd_short, by="GEO_ID")
+
+
+# convert to character, weighted income 
+## all tracts
+merged_income_house[,2] <- as.numeric(merged_income_house[,2])
+merged_income_house[,3] <- as.numeric(merged_income_house[,3])
+merged_income_house$weighted_income <- merged_income_house[,2] * merged_income_house[,3]
+weighted_median_income_all <- sum(merged_income_house[,4], na.rm = TRUE) / sum(merged_income_house[,3], na.rm=TRUE)
+## a
+merged_income_house_a[,2] <- as.numeric(merged_income_house_a[,2])
+merged_income_house_a[,3] <- as.numeric(merged_income_house_a[,3])
+merged_income_house_a$weighted_income <- merged_income_house_a[,2] * merged_income_house_a[,3]
+weighted_median_income_a <- sum(merged_income_house_a[,4], na.rm = TRUE) / sum(merged_income_house_a[,3], na.rm=TRUE)
+## b
+merged_income_house_b[,2] <- as.numeric(merged_income_house_b[,2])
+merged_income_house_b[,3] <- as.numeric(merged_income_house_b[,3])
+merged_income_house_b$weighted_income <- merged_income_house_b[,2] * merged_income_house_b[,3]
+weighted_median_income_b <- sum(merged_income_house_b[,4], na.rm = TRUE) / sum(merged_income_house_b[,3], na.rm=TRUE)
+## c
+merged_income_house_c[,2] <- as.numeric(merged_income_house_c[,2])
+merged_income_house_c[,3] <- as.numeric(merged_income_house_c[,3])
+merged_income_house_c$weighted_income <- merged_income_house_c[,2] * merged_income_house_c[,3]
+weighted_median_income_c <- sum(merged_income_house_c[,4], na.rm = TRUE) / sum(merged_income_house_c[,3], na.rm=TRUE)
+## d
+merged_income_house_d[,2] <- as.numeric(merged_income_house_d[,2])
+merged_income_house_d[,3] <- as.numeric(merged_income_house_d[,3])
+merged_income_house_d$weighted_income <- merged_income_house_d[,2] * merged_income_house_d[,3]
+weighted_median_income_d <- sum(merged_income_house_d[,4], na.rm = TRUE) / sum(merged_income_house_d[,3], na.rm=TRUE)
+```
+
+# Education Data
+```{r}
+education <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/downloaded_data/FF_SD_2010_education/ACS_10_5YR_S1501_with_ann.csv")
+
+#make copy
+education2 <- education
+
+# delete first row and second column
+education2 <- education2[-1,-2]
+
+# change name to GEO_ID
+names(education2)[1] <- "GEO_ID"
+
+#only keep a couple columns
+education3 <- education2[,c(1,33,39,45,51)]
+education3 <- education3[-627,]
+
+
+for (i in 2:ncol(education3)) {
+  education3[,i] <- lapply(education3[,i], function(x) as.numeric(x))
+}
+
+# export data file
+write.csv(education3, file = "FF_SD_2010_education_short.csv")
+```
+
+
+# Analyze income data
+```{r}
+# read in data (tracts that overlap with all of historic area)
+tracts_historic <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_historic.csv")
+tracts_a <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_a_intersect.csv")
+tracts_b <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_b_intersect.csv")
+tracts_c <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_c_intersect.csv")
+tracts_d <- read_csv("C:/Users/Sarita Rita/Desktop/UCLA/2017 Fall/7 geography/week 10/final_data/edited_data/Weighted Average/tracts_d_intersect.csv")
+
+tracts_historic_id <- tracts_historic[,1]
+tracts_id_a <- tracts_a[,1]
+tracts_id_b <- tracts_b[,1]
+tracts_id_c <- tracts_c[,1]
+tracts_id_d <- tracts_d[,1]
+
+# weighted average numerator
+education3$number_edu <- (education3[,3] * education3[,2] / 100)
+
+merge_edu_all <- merge(education3, tracts_historic_id, by="GEO_ID")
+merge_edu_a <- merge(education3, tracts_id_a, by="GEO_ID")
+merge_edu_b <- merge(education3, tracts_id_b, by="GEO_ID")
+merge_edu_c <- merge(education3, tracts_id_c, by="GEO_ID")
+merge_edu_d <- merge(education3, tracts_id_d, by="GEO_ID")
+
+# weighted average pct with less than 9th grade education
+weighted_ed_all <- sum(merge_edu_all[,6], na.rm=T) / sum(merge_edu_all[,2], na.rm=T) *100
+weighted_ed_a <- sum(merge_edu_a[,6], na.rm=T) / sum(merge_edu_a[,2], na.rm=T) *100
+weighted_ed_b <- sum(merge_edu_b[,6], na.rm=T) / sum(merge_edu_b[,2], na.rm=T) *100
+weighted_ed_c <- sum(merge_edu_c[,6], na.rm=T) / sum(merge_edu_c[,2], na.rm=T) *100
+weighted_ed_d <- sum(merge_edu_d[,6], na.rm=T) / sum(merge_edu_d[,2], na.rm=T) *100
+
+```
